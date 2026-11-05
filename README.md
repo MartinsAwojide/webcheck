@@ -57,9 +57,19 @@ cp scripts/demo_driver.py scripts/defect_map.py scripts/webcheck_demo.py ~/webch
 python3 scripts/download_test_frames.py --dest ~/test_frames
 ```
 
-**3. The models.** Clone the two public Edge Impulse projects, deploy each impulse as a **TensorRT library**
-(float32) and copy its ONNX files into the demo folder. The table of projects, impulses and folders is in the
-guide: [Set up the board, step 3](GUIDE.md#set-up-the-board).
+```bash
+# 3. the models: in Edge Impulse Studio, clone the two public projects (links below), deploy each impulse as a
+#    TensorRT library (float32), unzip the download and copy its ONNX files into the demo folder:
+#      webcheck_poc_ad, impulse 6  ->  onnx_gate6/  trained.onnx, trained_head.onnx   (gate, best recall)
+#      webcheck_poc_ad, impulse 7  ->  onnx_gate7/  trained.onnx, trained_head.onnx   (gate, best F1)
+#      webcheck_poc_od, impulse 5  ->  onnx_det5/   trained.onnx                      (YOLO-Pro small)
+mkdir -p ~/webcheck_demo/onnx_gate6 ~/webcheck_demo/onnx_gate7 ~/webcheck_demo/onnx_det5
+cp <unzipped export>/trained.onnx <unzipped export>/trained_head.onnx ~/webcheck_demo/onnx_gate6/   # and so on
+```
+
+The projects: [webcheck_poc_ad](https://studio.edgeimpulse.com/public/1147680/latest) (the gates) and
+[webcheck_poc_od](https://studio.edgeimpulse.com/public/1136708/latest) (the detector). The optional YOLO-Pro medium
+and each click in Studio are in the guide: [Set up the board, step 3](GUIDE.md#set-up-the-board).
 
 ```bash
 # 4. start (the first start builds the TensorRT engines: several minutes)
@@ -92,19 +102,17 @@ The splash screen lists the device options this machine has and picks the best. 
 ## How it works
 
 ```mermaid
-flowchart LR
-    F["Frame<br/>1920x1080"] --> T["6 tiles<br/>640x640"]
-    T --> G{"FOMO-AD gate<br/>every tile"}
-    G -- "normal" --> P(["passed"])
-    G -- "flagged" --> D["YOLO-Pro<br/>flagged tiles only"]
-    D --> L[("defect log<br/>JSON lines")]
+flowchart TB
+    F["Frame, 1920x1080<br/>cut into 6 tiles of 640x640"] --> G{"FOMO-AD gate<br/>scores every tile"}
+    G --> D["YOLO-Pro detector<br/>flagged tiles only"]
+    D --> H["HMI<br/>port 8080"]
+    D --> L[("Defect log<br/>JSON lines")]
     D --> M{{"MQTT<br/>UNS topics"}}
-    L --> H["HMI :8080"]
-    M --> S["Defect map :8090<br/>SQLite history"]
+    M --> S["Defect map, port 8090<br/>SQLite history"]
 ```
 
 Each frame is cut into six tiles. The gate is cheap and runs on all of them; the detector is the expensive model and
-runs only where the gate saw something. On the Jetson both are TensorRT engines built on the board from Edge
+runs only where the gate saw something, so a tile the gate passes as normal goes no further. On the Jetson both are TensorRT engines built on the board from Edge
 Impulse's ONNX exports; elsewhere ONNX Runtime runs the same files. A slice is never dropped: if the line outruns the
 models, the HMI says how far behind it is and catches up.
 
@@ -123,7 +131,7 @@ been run yet; [checking a new machine](GUIDE.md#checking-a-machine-the-project-h
 
 ## Documentation
 
-| | |
+| In the guide | What it covers |
 |---|---|
 | [What you need](GUIDE.md#what-you-need) | the board, the broker, Python, disk and an optional webcam |
 | [Settings](GUIDE.md#settings) | environment variables and the board config file |
