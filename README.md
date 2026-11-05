@@ -1,6 +1,9 @@
 <div align="center">
 
-# ⌖ webcheck
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="assets/wordmark-dark.svg">
+  <img src="assets/wordmark-light.svg" alt="webcheck" width="300">
+</picture>
 
 **Print-defect inspection for flexible-packaging web, at line speed on a Jetson Orin Nano.**
 
@@ -14,11 +17,17 @@ An anomaly gate and a defect detector in cascade, a live operator HMI, and a def
 [![Edge Impulse](https://img.shields.io/badge/models-Edge%20Impulse-3B47C2.svg)](https://studio.edgeimpulse.com/public/1147680/latest)
 [![Test frames](https://img.shields.io/badge/%F0%9F%A4%97%20test%20frames-CC--BY--4.0-FFD21E.svg)](https://huggingface.co/datasets/martinsawojide/webcheck-test-frames)
 
-[Quick start](#quick-start) · [How it works](#how-it-works) · [Performance](#performance) · [Full guide](GUIDE.md)
+[Quick start](#quick-start) · [How it works](#how-it-works) · [Screens](#screens) · [Performance](#performance) · [Full guide](GUIDE.md)
 
-<img src="assets/hmi.jpg" alt="The inspection HMI: the web with the latest defect, per-class counts and model timings" width="100%">
+<br>
+
+<img src="assets/hmi-banner.jpg" alt="The inspection HMI's header and counters over the printed web" width="100%">
 
 </div>
+
+> [!NOTE]
+> A prototype. The models are trained on synthetic renders of a fictional product, and the demo replays the held-out
+> synthetic test frames as if they came off a line. All brands, logos and codes in the artwork are fictional.
 
 ## Features
 
@@ -33,11 +42,23 @@ An anomaly gate and a defect detector in cascade, a live operator HMI, and a def
 - **One launcher for Linux, macOS and Windows:** start the demo on the board, or drive the board from a PC over ssh.
 - **Runs without a Jetson** through ONNX Runtime on a direct GPU, WebGPU or the CPU, slower, with the same pages.
 
-<img src="assets/defect-map.jpg" alt="The defect map: the live defect log, the per-class heatmap over one print repeat, and counts by class and severity" width="100%">
+## Screens
 
-> [!NOTE]
-> A prototype. The models are trained on synthetic renders of a fictional product, and the demo replays the held-out
-> synthetic test frames as if they came off a line. All brands, logos and codes in the artwork are fictional.
+<p align="center">
+  <img src="assets/hmi.jpg" alt="The inspection HMI: the web with the latest defect, per-class counts and model timings" width="100%">
+  <br>
+  <sub><b>Inspection HMI</b> (port 8080): station A at 123 m/min. Inspected slices and metres, defects per class, the
+  latest defect with its gate score, and both models' timings.</sub>
+</p>
+
+<br>
+
+<p align="center">
+  <img src="assets/defect-map.jpg" alt="The defect map: the live defect log, the per-class heatmap over one print repeat, and counts by class and severity" width="100%">
+  <br>
+  <sub><b>Defect map</b> (port 8090): the MQTT defect log streaming live, every detection folded onto one print repeat
+  as a per-class heatmap, and counts by class and severity with the defect rate in DPMO.</sub>
+</p>
 
 ## Quick start
 

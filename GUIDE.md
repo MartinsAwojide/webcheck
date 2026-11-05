@@ -39,7 +39,7 @@ up at 330 m/min but not at 450 m/min (10.8 of the 13.9 slices a second it needs;
 | `scripts/download_test_frames.py` | Download the test frames from Hugging Face |
 | `scripts/bench_cascade.py`, `scripts/bench_overlap.py`, `scripts/score_split.py` | Benchmarks and the scorer that checks the defect log against ground truth |
 | `scripts/check_device.py`, `scripts/reference/` | Checks a machine the project has not run on against the Jetson's results |
-| `scripts/webgpu_op_check.py`, `ci/webgpu-linux.yml` | Checks that every operator of the models runs on WebGPU; the CI workflow that runs it on Linux |
+| `scripts/webgpu_op_check.py` | Checks that every operator of the models runs on WebGPU |
 | `pyproject.toml`, `uv.lock` | The Python environment (uv) |
 
 ## What you need
@@ -164,8 +164,7 @@ It runs 8 published test frames through the models and compares every gate score
 results (`scripts/reference/board_parity.json`), times each tile, then holds the real HMI at 4 to 12 m/min to see
 which speed keeps up (about 7 minutes; `--ladder ""` skips it). Please send back the report it writes,
 `check_report.json`: it holds the device, the route, the comparison, the timings and the ladder, and nothing else.
-`scripts/webgpu_op_check.py` checks that every operator of the models runs on WebGPU. `ci/webgpu-linux.yml` runs it
-on Linux through a software Vulkan driver; copy it to `.github/workflows/` to run it on GitHub Actions.
+`scripts/webgpu_op_check.py` checks that every operator of the models runs on WebGPU.
 
 ## Settings
 
