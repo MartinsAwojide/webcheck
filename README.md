@@ -164,6 +164,23 @@ which speed keeps up (about 7 minutes; `--ladder ""` skips it). Please send back
 `scripts/webgpu_op_check.py` checks that every operator of the models runs on WebGPU. `ci/webgpu-linux.yml` runs it
 on Linux through a software Vulkan driver; copy it to `.github/workflows/` to run it on GitHub Actions.
 
+## Settings
+
+Most settings are command-line options: `--help` on `webcheck-demo` and on each script lists them. A few come from the
+environment or from one config file. Nothing needs a password or key, so there is no `.env` file.
+
+| Setting | Used by | What it does | Default |
+|---|---|---|---|
+| `BOARD` | `webcheck-demo board ...` | `user@host` of the Jetson | the first line of `~/.config/webcheck/board` |
+| `~/.config/webcheck/board` | the same | its first line, `user@host`, is used when `BOARD` is not set | none |
+| `REMOTE_DIR` | the same | the demo folder on the board, relative to its home folder | `webcheck_demo` |
+| `NO_COLOR` | `webcheck-demo` | any value turns colour off in the terminal output | not set |
+| `UI_TTY`, `UI_COLOR`, `UI_UTF8` | `webcheck-demo` | `0` or `1` forces the progress line, colour or box glyphs off or on | read from the terminal |
+| `CAMERA` | `scripts/run_demo.sh` | the webcam shown on the page: a `/dev/videoN` device, or `none` | `/dev/video0` when it exists |
+| `PORT` | the same | the page's port | `8080` |
+| `MQTT` | the same | where the defect log is published: `HOST`, `HOST:PORT`, or `none` | `localhost` |
+| `WEBCHECK_PYTHON` | the same | the Python that runs the demo | `python3` |
+
 ## Using the HMI
 
 - **Splash screen:** pick the station (A, after printing; B, after lamination), the device (the options this machine

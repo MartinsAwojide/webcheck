@@ -29,7 +29,7 @@ from webcheck.inference.stream import _FONT_DIR, _REG_MARK, FONT_FILES, _font_fa
 from webcheck.inference.severity import load_bands, severity
 from webcheck.inference.uns import PLACEMENTS, UnsTopics
 
-MAP_TEMPLATE = Path(__file__).parent / "static" / "map_template.png"     # made by scripts/make_map_template.py
+MAP_TEMPLATE = Path(__file__).parent / "static" / "map_template.png"     # one print repeat of the artwork, both lanes
 HEAT_MIN_RADIUS_MM = 8.0       # a blob is never smaller than this, so a tiny defect still shows
 HEAT_SPREAD = 1.5              # a blob is drawn to this many times its radius; it fades to nothing at the edge
 HEAT_TINT = 0.6                # the light end of a class's ramp: its colour mixed this far toward white
