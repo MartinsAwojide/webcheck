@@ -23,9 +23,9 @@ An anomaly gate and a defect detector in cascade, a live operator HMI, and a def
 
 <img src="assets/hmi-banner.jpg" alt="The inspection HMI's header and counters over the printed web" width="100%">
 
-<br>
-
 </div>
+
+&nbsp;
 
 > [!NOTE]
 > A prototype. The models are trained on synthetic renders of a fictional product, and the demo replays the held-out
