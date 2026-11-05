@@ -21,7 +21,7 @@ An anomaly gate and a defect detector in cascade, a live operator HMI, and a def
 
 <br>
 
-<img src="assets/hmi-banner.jpg" alt="The inspection HMI's header and counters over the printed web" width="100%">
+<img src="assets/demo-terminal.gif" alt="The demo launcher starting the HMI and defect map on the Jetson and printing their addresses, then its status" width="100%">
 
 </div>
 
