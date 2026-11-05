@@ -1,5 +1,5 @@
 #!/bin/bash
-# Starts the demo HMI from this repository's layout (see README.md).
+# Starts the demo HMI from this repository's layout (see GUIDE.md).
 #
 # usage: ./scripts/run_demo.sh [SLICES|max] [extra demo_driver.py flags...]
 #   SLICES  slices inspected before the run ends (default 1000000); max: no limit, the line runs until stopped

@@ -1,5 +1,5 @@
 """Check this machine against the Jetson, for anyone trying the demo on hardware the project has not
-run on (a Mac, a Windows PC, another Linux GPU). It needs the demo folder from the README (the Studio models in
+run on (a Mac, a Windows PC, another Linux GPU). It needs the demo folder from GUIDE.md (the Studio models in
 onnx_gate6 and onnx_det5) and the test frames from scripts/download_test_frames.py.
 
     uv run python scripts/check_device.py --dir ~/webcheck_demo [--frames ~/test_frames] [--gpu auto|direct|webgpu|none]
