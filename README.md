@@ -23,6 +23,8 @@ An anomaly gate and a defect detector in cascade, a live operator HMI, and a def
 
 <img src="assets/hmi-banner.jpg" alt="The inspection HMI's header and counters over the printed web" width="100%">
 
+<br>
+
 </div>
 
 > [!NOTE]
@@ -72,20 +74,22 @@ You need JetPack 6 (TensorRT 10.3 and `nvcc` come with it), Mosquitto and a free
 sudo apt install mosquitto python3-pil python3-numpy && pip3 install paho-mqtt
 git clone https://github.com/MartinsAwojide/webcheck.git && cd webcheck
 mkdir -p ~/webcheck_demo/pkg && cp -r src/webcheck ~/webcheck_demo/pkg/
-cp scripts/demo_driver.py scripts/defect_map.py scripts/webcheck_demo.py ~/webcheck_demo/
+cp scripts/demo_driver.py scripts/defect_map.py scripts/webcheck_demo.py \
+   ~/webcheck_demo/
 
 # 2. the synthetic test frames (about 2 GB, checksummed)
 python3 scripts/download_test_frames.py --dest ~/test_frames
 ```
 
 ```bash
-# 3. the models: in Edge Impulse Studio, clone the two public projects (links below), deploy each impulse as a
-#    TensorRT library (float32), unzip the download and copy its ONNX files into the demo folder:
-#      webcheck_poc_ad, impulse 6  ->  onnx_gate6/  trained.onnx, trained_head.onnx   (gate, best recall)
-#      webcheck_poc_ad, impulse 7  ->  onnx_gate7/  trained.onnx, trained_head.onnx   (gate, best F1)
-#      webcheck_poc_od, impulse 5  ->  onnx_det5/   trained.onnx                      (YOLO-Pro small)
-mkdir -p ~/webcheck_demo/onnx_gate6 ~/webcheck_demo/onnx_gate7 ~/webcheck_demo/onnx_det5
-cp <unzipped export>/trained.onnx <unzipped export>/trained_head.onnx ~/webcheck_demo/onnx_gate6/   # and so on
+# 3. the models: in Edge Impulse Studio, clone the two public projects
+#    (links below), deploy each impulse as a TensorRT library (float32),
+#    unzip it and copy its ONNX files into the demo folder:
+#      webcheck_poc_ad, impulse 6 -> onnx_gate6/  trained.onnx, trained_head.onnx
+#      webcheck_poc_ad, impulse 7 -> onnx_gate7/  trained.onnx, trained_head.onnx
+#      webcheck_poc_od, impulse 5 -> onnx_det5/   trained.onnx
+cd ~/webcheck_demo && mkdir -p onnx_gate6 onnx_gate7 onnx_det5
+cp <export>/trained.onnx <export>/trained_head.onnx onnx_gate6/   # and so on
 ```
 
 The projects: [webcheck_poc_ad](https://studio.edgeimpulse.com/public/1147680/latest) (the gates) and
@@ -104,7 +108,9 @@ its network. Pick the station, speed, gate and detector on the first screen, the
 ### From a PC, driving the board
 
 ```bash
-BOARD=user@jetson make board        # or: uv run webcheck-demo board start   (Windows: $env:BOARD="user@jetson")
+BOARD=user@jetson make board                 # Linux, macOS
+BOARD=user@jetson uv run webcheck-demo board start
+$env:BOARD="user@jetson"; uv run webcheck-demo board start   # Windows PowerShell
 ```
 
 The launcher copies the code to the board over ssh and starts it there. See
@@ -113,7 +119,7 @@ The launcher copies the code to the board over ssh and starts it there. See
 ### Without a Jetson
 
 ```bash
-uv sync --extra demo --extra onnx                 # add --extra webgpu for the WebGPU route
+uv sync --extra demo --extra onnx        # add --extra webgpu for WebGPU
 uv run webcheck-demo start --dir ~/webcheck_demo --backend onnxruntime --open
 ```
 
