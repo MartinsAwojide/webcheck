@@ -1,0 +1,24 @@
+# Python and uv
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+.pytest_cache/
+
+# What the demo downloads, builds and writes
+test_frames/
+onnx_*/
+engine_cache/
+build_cu/
+results/
+*.log
+*.pid
+defect_map.sqlite*
+driver_hmi*.json*
+check_report.json
+
+# Editors and operating systems
+.DS_Store
+.idea/
+.vscode/
+Thumbs.db

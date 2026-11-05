@@ -1,0 +1,45 @@
+{
+ "split": "train",
+ "placements": [
+  "A",
+  "B"
+ ],
+ "quantiles": [
+  50,
+  90
+ ],
+ "measure": "web_extent_mm box area per defect instance",
+ "date": "2026-11-04",
+ "classes": {
+  "bubbles": {
+   "p50_mm2": 32.7,
+   "p90_mm2": 73.5,
+   "n": 76
+  },
+  "dot_skip": {
+   "p50_mm2": 324.0,
+   "p90_mm2": 776.2,
+   "n": 245
+  },
+  "mottling": {
+   "p50_mm2": 8500.8,
+   "p90_mm2": 18693.0,
+   "n": 286
+  },
+  "silvering": {
+   "p50_mm2": 21327.7,
+   "p90_mm2": 50404.4,
+   "n": 89
+  },
+  "streaks": {
+   "p50_mm2": 1029.0,
+   "p90_mm2": 1928.2,
+   "n": 338
+  },
+  "tunneling": {
+   "p50_mm2": 1050.4,
+   "p90_mm2": 1825.6,
+   "n": 107
+  }
+ }
+}

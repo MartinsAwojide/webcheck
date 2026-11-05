@@ -1,0 +1,7 @@
+{
+ "lane_width_mm": 550.0793333333332,
+ "sheet_length_mm": 345.01666666666665,
+ "sheet_gap_mm": 10.0,
+ "lane_gap_mm": 10.0,
+ "n_lanes": 2
+}
