@@ -46,7 +46,8 @@ up at 330 m/min but not at 450 m/min (10.8 of the 13.9 slices a second it needs;
 
 - An NVIDIA **Jetson Orin Nano** with JetPack 6 (tested on L4T R36.4.7) and the TensorRT 10.3 and CUDA toolkit
   (`nvcc`) that come with it. TensorRT is not installable with pip; the demo uses the system's.
-- **Mosquitto** MQTT broker on the board: `sudo apt install mosquitto` (it runs as a service on port 1883).
+- **Mosquitto** MQTT broker on the board: `sudo apt install mosquitto mosquitto-clients` (the broker runs as a
+  service on port 1883; `mosquitto_sub` from the clients shows the topics).
 - Python 3.10 with numpy, Pillow and paho-mqtt. On the board: `sudo apt install python3-pil python3-numpy` and
   `pip3 install paho-mqtt`. On a PC: `uv sync --extra demo`.
 - About 2 GB of disk for the test frames and models, and a browser on the same network (a TV works).
@@ -235,6 +236,8 @@ ENERGY_UP_LLC/TEXAS_FACILITY/Printing_Lamination/Line_1/Placement_A/defect/class
 ENERGY_UP_LLC/TEXAS_FACILITY/Printing_Lamination/Line_1/Placement_A/frame         one message per inspected frame: its tiles, the tiles a defect came from, its records
 ENERGY_UP_LLC/TEXAS_FACILITY/Printing_Lamination/Line_1/Placement_B/...           the same for the lamination station
 ```
+
+To watch them from any machine on the network: `mosquitto_sub -h <board> -t 'ENERGY_UP_LLC/#' -v`.
 
 ## How the code is organised
 

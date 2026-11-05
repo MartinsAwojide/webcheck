@@ -71,7 +71,8 @@ You need JetPack 6 (TensorRT 10.3 and `nvcc` come with it), Mosquitto and a free
 
 ```bash
 # 1. dependencies and the code
-sudo apt install mosquitto python3-pil python3-numpy && pip3 install paho-mqtt
+sudo apt install mosquitto mosquitto-clients python3-pil python3-numpy
+pip3 install paho-mqtt
 git clone https://github.com/MartinsAwojide/webcheck.git && cd webcheck
 mkdir -p ~/webcheck_demo/pkg && cp -r src/webcheck ~/webcheck_demo/pkg/
 cp scripts/demo_driver.py scripts/defect_map.py scripts/webcheck_demo.py \
@@ -152,9 +153,11 @@ models, the HMI says how far behind it is and catches up.
 | Laptop, Core i7-1355U and RTX 2050 (R1, float32, measured) | ONNX Runtime, WebGPU (Vulkan) | about 0.16 s per tile, against about 0.02 s on the Jetson |
 | the same laptop, CPU only (R1, float32, measured) | ONNX Runtime, CPU | about 1.5 s per tile, roughly 2 m/min of web |
 
-Measured with the best-F1 gate, YOLO-Pro small, both pages, the defect map and MQTT running. Off the Jetson, gate
-scores agree with the board within 0.22 % and the detections are the same on 8 test frames. A Mac and Windows have not
-been run yet; [checking a new machine](GUIDE.md#checking-a-machine-the-project-has-not-run-on) takes one command.
+Measured with the best-F1 gate, YOLO-Pro small, both pages, the defect map and MQTT running. The demo starts with the
+best recall gate, the default: it flags more tiles, so it runs slower; pick best F1 on the splash screen for the speeds
+above. Off the Jetson, gate scores agree with the board within 0.22 % and the detections are the same on 8 test frames.
+A Mac and Windows have not been run yet;
+[checking a new machine](GUIDE.md#checking-a-machine-the-project-has-not-run-on) takes one command.
 
 ## Documentation
 

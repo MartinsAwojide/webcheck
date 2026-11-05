@@ -3,8 +3,8 @@
 the whole record, the same JSON as its log-file line; `defect/class`, `/confidence`, `/location` and `/size` each carry
 the timestamp and that one field. `frame` carries one message per inspected slice with its tile count, the tiles a logged
 record came from and its record count, so a reader can count tiles and defective tiles (the defect map's DPMO). The JSON Lines file stays the record of truth: `PublishingLog` writes the file first and
-publishes second, and publishing never raises into the inspection. The client is paho-mqtt (the client behind Arduino App
-Lab's MQTT brick), at QoS 0 with a bounded queue."""
+publishes second, and publishing never raises into the inspection. The client is paho-mqtt, at QoS 0 with a bounded
+queue."""
 import json
 from datetime import datetime, timezone
 from typing import List, Tuple
