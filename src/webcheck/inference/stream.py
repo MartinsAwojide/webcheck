@@ -369,12 +369,12 @@ html,body{margin:0;background:var(--canvas);color:var(--paper);font-family:'IBM 
 .raw-on #legend{margin-top:10px}.raw-on #telemetry{margin-top:10px;line-height:1.3}
 .raw-on #latestbody{margin-top:10px}.raw-on #latestcrop{width:96px;height:96px}.raw-on #latestname{font-size:26px}
 .raw-on #latestconf{font-size:34px}.raw-on #latestdata{margin-top:4px}.raw-on #scoretrack{margin-top:10px}
-.square #title,.square #model{font-size:32px}.square #wordmark{display:none}
+.square #title{font-size:32px}.square #model{display:none}.square #logchip{display:none}.square #wordmark{display:none}
 .square #picture{left:__L__px;top:__T__px;width:1016px;height:571px}
 .square #overload{width:1016px}
 .square #panel{left:__L__px;top:683px;width:1016px;height:365px;flex-direction:row}
-.square #latest{order:1;flex:0 0 600px}.square #counter{order:2;flex:1 1 auto}.square #count{font-size:88px}.square #telemetry{display:none}
-.square #metres{font-size:22px;white-space:nowrap}
+.square #latest{order:1;flex:0 0 600px}.square #counter{order:2;flex:1 1 auto;min-width:0}.square #legend{grid-template-columns:repeat(2,1fr)}.square #count{font-size:88px}.square #telemetry{display:none}
+.square #metres{font-size:22px;white-space:normal;line-height:1.25}
 .square #strip{display:none}
 .square #bar{display:none}
 .square #pip,.square #edge{display:none}
