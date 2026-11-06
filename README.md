@@ -129,15 +129,7 @@ The splash screen lists the device options this machine has and picks the best. 
 
 ## How it works
 
-```mermaid
-flowchart TB
-    F["Frame, 1920x1080<br/>cut into 6 tiles of 640x640"] --> G{"FOMO-AD gate<br/>scores every tile"}
-    G --> D["YOLO-Pro detector<br/>flagged tiles only"]
-    D --> H["HMI<br/>port 8080"]
-    D --> L[("Defect log<br/>JSON lines")]
-    D --> M{{"MQTT<br/>UNS topics"}}
-    M --> S["Defect map, port 8090<br/>SQLite history"]
-```
+![Frame cut into six tiles; the FOMO-AD gate scores every tile; flagged tiles go to the YOLO-Pro detector, which feeds the HMI, a defect log and MQTT; MQTT feeds the defect map.](assets/how-it-works.svg)
 
 Each frame is cut into six tiles. The gate is cheap and runs on all of them; the detector is the expensive model and
 runs only where the gate saw something, so a tile the gate passes as normal goes no further. On the Jetson both are TensorRT engines built on the board from Edge
