@@ -276,7 +276,7 @@ GPU; the rest is plain Python and NumPy.
 |---|---|
 | `nvcc` not found | install the CUDA toolkit (`cuda-toolkit-12-6` on JetPack 6); the demo also looks in `/usr/local/cuda/bin` |
 | `ModuleNotFoundError: tensorrt` on the Jetson | install `python3-libnvinfer` and run with the system `python3`, not a virtual environment |
-| the page does not load | on a first start, wait for the `HMI ready` line (engines are still building); otherwise the port is busy or a firewall blocks it |
+| the page does not load | wait for the `HMI ready` line: the start screen is up by then, and the engines are built after Start, not before it. If the line never appears, read `hmi_demo.log` in the demo folder; otherwise the port is busy or a firewall blocks it |
 | `port 8080 is in use` | another program holds the port; stop it, or start with `--hmi-port` and `--map-port` |
 | `no WebGPU device` | install the `webgpu` extra; on Linux install the Vulkan loader (`libvulkan1`) |
 | no camera view | only external webcams are shown on Linux; check `ls /dev/video*` |
