@@ -25,8 +25,10 @@ from pathlib import Path
 HMI_LOG, HMI_PID = "hmi_demo.log", "hmi_demo.pid"
 MAP_LOG, MAP_PID = "defect_map.log", "defect_map.pid"
 DB = "defect_map.sqlite"
+STOP_WAIT_S, KILL_WAIT_S, STOP_POLL_S = 20.0, 5.0, 0.25    # how long a stop waits after asking, then after killing
 MAX_SLICES = 2 ** 63 - 1
 SPLASH = "waiting for the splash"
+MILESTONE = 25                                  # percent per milestone: old run stopped, map up, HMI up, splash up
 REMOTE_DIR = "webcheck_demo"
 BOARD_SCRIPTS = ("demo_driver.py", "defect_map.py", "webcheck_demo.py")
 
@@ -128,6 +130,11 @@ def pid_alive(pid: int) -> bool:
         return False
     except PermissionError:
         return True
+    try:                                                            # ended, but its parent has not collected it yet
+        if Path(f"/proc/{pid}/stat").read_text().rsplit(")", 1)[-1].split()[0] == "Z":
+            return False
+    except (OSError, IndexError):
+        pass
     try:                                                            # a child of this process that already ended
         done, _ = os.waitpid(pid, os.WNOHANG)
         return done == 0
@@ -151,11 +158,13 @@ __      _____| |__   ___| |__   ___  ___| | __
   \_/\_/ \___|_.__/ \___|_| |_|\___|\___|_|\_\
 """
 
-    def __init__(self, tty=False, color=False, utf8=False, out=None, err=None):
+    def __init__(self, tty=False, color=False, utf8=False, out=None, err=None, pause=time.sleep):
         self.tty, self.color, self.utf8 = tty, color, utf8
         self.out = out if out is not None else sys.stdout
         self.err = err if err is not None else sys.stderr
+        self._pause = pause
         self._frame = 0
+        self._live = None                       # (label, pct, drawn width) of the progress line now on screen
         if utf8:
             self.g = dict(step="▸", ok="✔", warn="▲", fail="✖", full="█", empty="░", roll="▓▒░",
                           tl="╭", tr="╮", bl="╰", br="╯", h="─", v="│", spin="⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏")
@@ -185,8 +194,17 @@ __      _____| |__   ___| |__   ___  ___| | __
         return f"\033[{code}m" if self.color else ""
 
     def _say(self, stream, text: str):
+        if self._live and stream is self.out:                       # lines scroll above the progress line
+            stream.write("\r" + " " * self._live[2] + "\r")
         stream.write(text + "\n")
+        if self._live and stream is self.out:
+            self._draw(*self._live[:2])
         stream.flush()
+
+    def pause(self, seconds: float):
+        """A short beat so a person can follow the start; only on a terminal."""
+        if self.tty:
+            self._pause(seconds)
 
     def banner(self):
         acc, dim, bold, reset = self._c("1;38;5;44"), self._c("2"), self._c("1"), self._c("0")
@@ -213,22 +231,38 @@ __      _____| |__   ___| |__   ___  ___| | __
         return (f"[{self._c('38;5;44')}{self.g['full'] * fill}{self._c('2')}{self.g['empty'] * (width - fill)}"
                 f"{self._c('0')}] {pct:3d}%")
 
+    def _draw(self, label: str, done: int, total: int = 100):
+        spin = self.g["spin"][self._frame % len(self.g["spin"])]
+        self._frame += 1
+        width = len(f"  {spin} [{'-' * 20}] 100% {label[:44]:<44}")
+        self.out.write(f"\r  {self._c('38;5;44')}{spin}{self._c('0')} {self.bar(done, total, 20)} {label[:44]:<44}")
+        self.out.flush()
+        self._live = (label, done, width)
+
     def wait(self, label: str, done: int, total: int):
         if not self.tty:
             return
-        spin = self.g["spin"][self._frame % len(self.g["spin"])]
-        self._frame += 1
-        self.out.write(f"\r  {self._c('38;5;44')}{spin}{self._c('0')} {self.bar(done, total, 20)} {label[:44]:<44}")
-        self.out.flush()
+        self._draw(label, done if total == 100 else done * 100 // max(total, 1))
+
+    def progress(self, label: str, pct: int, step: int = 5, beat: float = 0.04):
+        """Fill the bar up to `pct`, a few points at a time, so each milestone is seen arriving."""
+        if not self.tty:
+            return
+        start = self._live[1] if self._live else 0
+        for value in range(start + step, pct, step):
+            self._draw(label, value)
+            self._pause(beat)
+        self._draw(label, pct)
 
     def wait_end(self):
         if self.tty:
+            self._live = None
             self._say(self.out, "")
 
     def addresses(self, ip: str, hmi_port: int, map_port: int):
-        g, w, acc, reset = self.g, 46, self._c("38;5;44"), self._c("0")
+        g, w, acc, reset = self.g, 62, self._c("38;5;44"), self._c("0")
         rows = [f"HMI         http://{ip}:{hmi_port}", f"Defect map  http://{ip}:{map_port}", "",
-                "On the TV: Chrome, ?square for 1080x1080"]
+                "For square resolutions, use ?square for a 1080x1080 canvas"]
         lines = [f"\n  {acc}{g['tl']}{g['h'] * w}{g['tr']}{reset}"]
         lines += [f"  {acc}{g['v']}{reset} {row:<{w - 2}} {acc}{g['v']}{reset}" for row in rows]
         lines += [f"  {acc}{g['bl']}{g['h'] * w}{g['br']}{reset}\n"]
@@ -242,25 +276,66 @@ def _read_pid(pidfile: Path):
         return None
 
 
-def stop_pid(pidfile: Path, screen: Screen):
-    """Stop the process named in `pidfile` by its PID and remove the file; a stale file is just removed."""
+class StopFailed(Exception):
+    """A demo process is still running after it was asked to stop and then killed."""
+
+
+def process_command(pid: int):
+    """The command line of a running process, or None when it is gone or cannot be read (for example on Windows)."""
+    try:
+        return Path(f"/proc/{pid}/cmdline").read_bytes().replace(b"\0", b" ").decode(errors="replace").strip() or None
+    except OSError:
+        pass
+    if platform.system() == "Windows":
+        return None
+    try:
+        done = subprocess.run(["ps", "-p", str(pid), "-o", "command="], capture_output=True, text=True, timeout=5)
+    except (OSError, subprocess.SubprocessError):
+        return None
+    return done.stdout.strip() or None if done.returncode == 0 else None
+
+
+def _gone(pid: int, seconds: float) -> bool:
+    end = time.monotonic() + seconds
+    while pid_alive(pid):
+        if time.monotonic() >= end:
+            return False
+        time.sleep(STOP_POLL_S)
+    return True
+
+
+def stop_pid(pidfile: Path, screen: Screen, expect: str = None):
+    """Stop the demo process named in `pidfile` by its PID and remove the file. The process is asked to stop, then killed
+    if it has not ended; StopFailed if it still runs. A stale file is just removed, and so is one whose PID now belongs to
+    another program (its command line lacks `expect`): that program is left alone."""
     if not pidfile.exists():
         return None
     pid = _read_pid(pidfile)
-    stopped = None
-    if pid is not None and pid_alive(pid):
+    if pid is None or not pid_alive(pid):
+        pidfile.unlink(missing_ok=True)
+        return None
+    command = process_command(pid)
+    if expect and command is not None and expect not in command:
+        screen.warn(f"{pidfile.name} names pid {pid}, which is not the demo; left it alone")
+        pidfile.unlink(missing_ok=True)
+        return None
+    how = ""
+    try:
+        os.kill(pid, signal.SIGTERM)
+    except OSError:
+        pass
+    if not _gone(pid, STOP_WAIT_S):
         try:
-            os.kill(pid, signal.SIGTERM)
+            os.kill(pid, getattr(signal, "SIGKILL", signal.SIGTERM))
         except OSError:
             pass
-        for _ in range(80):
-            if not pid_alive(pid):
-                break
-            time.sleep(0.25)
-        screen.ok(f"stopped {pid} ({pidfile.name})")
-        stopped = pid
+        if not _gone(pid, KILL_WAIT_S):
+            screen.fail(f"could not stop {pid} ({pidfile.name}); it is still running")
+            raise StopFailed(pid)
+        how = ", killed: it ignored the request to stop"
+    screen.ok(f"stopped {pid} ({pidfile.name}{how})")
     pidfile.unlink(missing_ok=True)
-    return stopped
+    return pid
 
 
 def _spawn(argv: list, folder: Path, log: str):
@@ -277,28 +352,45 @@ def _tail(path: Path, n: int = 5) -> str:
         return ""
 
 
+def _fill(stage: int, waited: float) -> int:
+    """Percent while waiting at the last milestone: it creeps toward the next one but never reaches it."""
+    return min(MILESTONE * stage + int(MILESTONE * (1 - 0.5 ** (waited / 3))), 99)
+
+
 def cmd_start(folder: Path, args, screen: Screen) -> int:
     screen.banner()
-    stop_pid(folder / HMI_PID, screen)
-    stop_pid(folder / MAP_PID, screen)
+    screen.pause(0.5)
+    screen.progress("stopping the previous run", 5)
+    try:
+        stop_pid(folder / HMI_PID, screen, "demo_driver.py")
+        stop_pid(folder / MAP_PID, screen, "defect_map.py")
+    except StopFailed:
+        screen.wait_end()
+        return 1
     for port in (args.hmi_port, args.map_port):
         if port_in_use(port):
+            screen.wait_end()
             screen.fail(f"port {port} is in use by a program not started from this folder; stop that one first")
             return 1
     if args.clear_db:
         for name in (DB, DB + "-wal", DB + "-shm"):
             (folder / name).unlink(missing_ok=True)
         screen.ok("defect map database cleared")
+    screen.progress("previous run stopped", MILESTONE)
+    screen.pause(0.4)
     frames = Path(args.frames) if args.frames else Path("..") / "test_frames"
     python = sys.executable
     screen.step(f"defect map on port {args.map_port} (log {MAP_LOG})")
     mapper = _spawn(map_command(python, args.map_port), folder, MAP_LOG)
     (folder / MAP_PID).write_text(str(mapper.pid))
+    screen.progress("defect map started", 2 * MILESTONE)
+    screen.pause(0.4)
     screen.step(f"HMI on port {args.hmi_port} (log {HMI_LOG})")
     hmi = _spawn(hmi_command(folder, python, parse_slices(args.slices), frames, args.hmi_port, backend=args.backend,
                              gpu=args.gpu),
                  folder, HMI_LOG)
     (folder / HMI_PID).write_text(str(hmi.pid))
+    screen.progress("HMI started, waiting for its splash screen", 3 * MILESTONE)
     ready, began = False, time.monotonic()
     while True:
         waited = time.monotonic() - began
@@ -318,8 +410,11 @@ def cmd_start(folder: Path, args, screen: Screen) -> int:
             return 1
         if waited >= args.wait_s:
             break
-        screen.wait(f"starting the HMI ({int(waited)} s)", int(waited), args.wait_s)
+        screen.wait(f"starting the HMI ({int(waited)} s)", max(_fill(3, waited), 3 * MILESTONE), 100)
         time.sleep(0.25)
+    if ready:
+        screen.progress("HMI ready", 100)
+        screen.pause(0.4)
     screen.wait_end()
     if ready:
         screen.ok("HMI ready, waiting at the splash screen (the first start builds the engines after Start)")
@@ -333,9 +428,13 @@ def cmd_start(folder: Path, args, screen: Screen) -> int:
 
 
 def cmd_stop(folder: Path, screen: Screen) -> int:
-    stop_pid(folder / HMI_PID, screen)
-    stop_pid(folder / MAP_PID, screen)
-    return 0
+    failed = False
+    for name, program in ((HMI_PID, "demo_driver.py"), (MAP_PID, "defect_map.py")):
+        try:
+            stop_pid(folder / name, screen, program)
+        except StopFailed:
+            failed = True
+    return 1 if failed else 0
 
 
 def cmd_status(folder: Path, screen: Screen) -> int:
